@@ -14,19 +14,18 @@ function init() {
 
   $('.mv .inner').each(function(i,e) {
 
-    // color = chroma.random();
-
-    param.push({
+    o = {
       rate:0,
-      x:0,
-      angle:0,
-      tgX1:random(0, window.innerWidth),
-      tgX2:random(0, window.innerWidth),
+      now:{x:0, y:0},
+      tg1:{x:0, y:0},
+      tg2:{x:0, y:0},
       color:chroma.random().css(),
-      // edgeColor:chroma.random().css(),
       edgeColor:chroma.random().css(),
       el:$(e)
-    });
+    };
+
+    reset(o);
+    param.push(o);
 
   });
 
@@ -59,37 +58,35 @@ function update() {
   mouse.x += (mouse.clientX - mouse.x) * 0.2;
   mouse.y += (mouse.clientY - mouse.y) * 0.2;
 
-  rate = map(mouse.x, 0, 1, 0, sw);
-
   len = param.length;
   for(var i = 0; i < len; i++) {
 
     o = param[i];
 
-    o.tgX1 = sw * 0.5;
-    // o.tgX2 = sw;
+    tgX = o.tg1.x * (1 - o.rate) + o.tg2.x * o.rate;
+    tgY = o.tg1.y * (1 - o.rate) + o.tg2.y * o.rate;
 
-    // o.tgX1 = sw * 0.5;
-    // o.tgX2 =
+    o.now.x += (tgX - o.now.x) * ease;
+    o.now.y += (tgY - o.now.y) * ease;
 
-    xRate = map(mouse.x, 0, 1, 0, sw);
-    tgX = o.tgX1 * (1 - xRate) + o.tgX2 * xRate;
-    o.x += (tgX - o.x) * ease;
+    range = 90;
+    ang = map(o.now.x, -range, range, 0, sw);
 
-    //colorRata = map(mouse.x, 0, 1, 0, sw);
 
-    ang1 = 90;
-    ang2 = 270;
 
-    ang = ang1 * (1 - rate) + ang2 * rate;
+    pct = 100 - (o.now.y / sh) * 100;
 
     grad = 'linear-gradient(' + ang + 'deg, ' + o.edgeColor + ' 0%, ';
-    grad += o.color + ' ' + ((o.x / sw) * 100) + '%, ';
+    grad += o.color + ' ' + pct + '%, ';
     grad += o.edgeColor + ' 100%)';
 
     o.el.css({
       background:grad
     });
+
+    if(o.rate >= 1) {
+      reset(o);
+    }
 
   }
 
@@ -100,6 +97,38 @@ function update() {
   window.requestAnimationFrame(update);
 }
 
+
+
+// リセット
+function reset(obj) {
+
+  sw = window.innerWidth
+  sh = window.innerHeight
+
+  obj.rate = 0;
+
+  obj.now.x = random(0, sw);
+  obj.now.y = sh;
+
+  obj.tg1.x = random(0, sw);
+  obj.tg1.y = sh * 0.5;
+
+  obj.tg2.x = sw * 0.5;
+  obj.tg2.y = 0;
+
+  obj.color = chroma.random().css();
+  obj.edgeColor = chroma(obj.color).brighten(10).css();
+
+  // rate値をアニメーション
+  duration = 1.5;
+  TweenMax.killTweensOf(obj);
+  TweenMax.to(obj, duration, {
+    rate:1,
+    ease:Power1.easeOut,
+    delay:0
+  })
+
+}
 
 
 
